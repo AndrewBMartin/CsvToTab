@@ -1,5 +1,5 @@
 # CsvToTab
-Convert GMPL csv files to AMPL tab files
+Convert GMPL csv files to AMPL tab files.
 
 Convert all the csv files associated with a GMPL model
 in a particular directory to AMPL format .tab files
