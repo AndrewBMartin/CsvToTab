@@ -21,36 +21,51 @@ def CsvToTab(old_dir, new_dir):
     
     For the purposes of AMPL headers, if there are n
     headers in the GMPL csv then n - 1 are assumed to 
-    be keys, and 1 is assumed to be a value.
+    be keys, and 1 is assumed to be a value. If the file
+    is a single column of data then the column is 
+    recorded as values.
     """
     
-    # Create new directory.
-    # If the new directory already exists pass.
-    # If the directory name given is not a valid
-    # directory name then an error will be raised
-    # when trying to open a file in the new directory.
+    # Create directory
     try:
         os.mkdir(new_dir)
     except Exception, e:
-        pass
-    
-    # Collect all csv files in the old directory
+        print "directory exitsts"
+        
+    # Get all csv files in the old directory
     files = glob.glob(os.path.join(old_dir, "*.csv"))
-    for f in files:
-        with open(f, "rb+") as read_file:
+    
+    keys = ""
+    rows = []
+    headers = []
+    vals = ""
+    
+    # Go through each file. Read its contents.
+    # Determine its header. Then write to
+    # a tab file.
+    for file in files:
+        # Separate the filename from its path and .csv extension.
+        # Add the .tab extension.
+        new_location = "{0}.{1}".format(os.path.splitext(
+                              os.path.basename(file))[0], "tab")
+        
+        with open(file, "rb+") as read_file:
             rf = csv.reader(read_file)
-            with open(os.path.join(new_dir, os.path.basename(f)), "wb+") as write_file:
-                wf = csv.writer(write_file, delimiter="\t")
+            headers = rf.next()
+            keys = len(headers) - 1
+            vals = 1
+            rows = list(rf)
+            
+        with open(os.path.join(new_dir, new_location ), "wb+") as write_file:
+            wf = csv.writer(write_file, delimiter="\t")
+            
+            # Single column file
+            if keys == 0:
+                wf.writerow(["ampl.tab 1"])
+            # Multiple column file
+            else:
+                wf.writerow(["ampl.tab {0} {1}".format(keys, vals)])
                 
-                # Make AMPL header
-                headers = rf.next()
-                keys = len(headers) - 1
-                vals = 1
-                wf.writerow(["ampl.tab", keys, vals])
-                wf.writerow(headers)
-                
-                # Write CSV data as TAB data
-                rows = list(rf)
-                wf.writerows(rows)
-                
-        print "{0} has been converted from CSV to AMPL tab".format(f)
+            wf.writerow(headers)
+            wf.writerows(rows)
+        print "{0} converted to AMPL tab".format(file)
